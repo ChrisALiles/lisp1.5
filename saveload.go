@@ -5,6 +5,7 @@ import (
 	"os"
 )
 
+// Create file and save user defined function definitions.
 func save() error {
 
 	f, err := os.Create("./" + saveFile)
@@ -18,6 +19,7 @@ func save() error {
 	return nil
 }
 
+// Load user defined function definitions from a file.
 func Load() error {
 
 	f, err := os.Open("./" + saveFile)

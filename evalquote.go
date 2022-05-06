@@ -18,22 +18,28 @@ func evalQuote(sxpr sexpr) (sexpr, error) {
 		return evalAtom(sxpr)
 	}
 
+	// Empty list.
 	if len(sxpr.List) == 0 {
 		return nilSexpr, nil
 	}
 
-	// debugging
+	// debugging.
+	// Add a new environment frame.
 	if sxpr.List[0].AtomName == "pushf" {
 		environ.pushFrame()
 		return nilSexpr, nil
 	}
 
 	// debugging
+	// Remove the most recent environment frame.
 	if sxpr.List[0].AtomName == "popf" {
 		environ.popFrame()
 		return nilSexpr, nil
 	}
 
+	// The next few fuctions are those that don't
+	// need to have their parameters evaluated
+	// (immediately).
 	if sxpr.List[0].AtomName == "cond" {
 		return evalCond(sxpr)
 	}
@@ -58,6 +64,7 @@ func evalQuote(sxpr sexpr) (sexpr, error) {
 		sxpr.List[1].Quoted = true
 	}
 
+	// Evaluate parameters.
 	for indx, thisSxpr := range sxpr.List[1:] {
 
 		if thisSxpr.Quoted {
@@ -114,6 +121,7 @@ func evalQuote(sxpr sexpr) (sexpr, error) {
 
 	// Now execute the function body - presumably this
 	// could be a number of S-expressions.
+	// Note that the new environment frame is still active.
 	var fnResult sexpr
 	var fnErr error
 	for _, exSxpr := range fnSxpr.List[2:] {
@@ -125,6 +133,7 @@ func evalQuote(sxpr sexpr) (sexpr, error) {
 	return fnResult, nil
 }
 
+// End the REPL session.
 func applyQuit(sxpr sexpr) (sexpr, error) {
 
 	fmt.Println("Shutting down ...")
@@ -229,6 +238,7 @@ func applyQuote(sxpr sexpr) (sexpr, error) {
 	return sxpr.List[1], nil
 }
 
+// We use defun instead of define, at least initially.
 func applyDefine(sxpr sexpr) (sexpr, error) {
 
 	return sxpr, nil

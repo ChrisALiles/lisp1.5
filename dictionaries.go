@@ -1,5 +1,7 @@
 package LISP15
 
+// Table of builtin LISP functions giving the implementing
+// functions.
 var propList = propertyList{
 	"add1":       {"add1", zeroSexpr, applyAdd1, ""},
 	"atom":       {"atom", zeroSexpr, applyAtom, ""},

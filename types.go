@@ -64,6 +64,7 @@ type sexpr struct {
 	List     []sexpr
 }
 
+// Print representation of an S-expression.
 func (sxpr sexpr) String() string {
 	if sxpr.SexprTyp == atomSexpr {
 		return sxpr.Val
@@ -143,14 +144,19 @@ type propertyList map[string]property
 // defined function definitions.
 type associationList map[string]property
 
+// environment holds all the association lists.
+// [0] is the global environment.
+// the environment is created in the init function.
 type environMent []associationList
 
+// Add a new environment frame.
 func (e *environMent) pushFrame() {
 
 	var newFrame = make(associationList)
 	*e = append(*e, newFrame)
 }
 
+// Remove the most recent environment frame.
 func (e *environMent) popFrame() {
 
 	// note the pointer must be dereference before it
@@ -162,6 +168,7 @@ func (e *environMent) popFrame() {
 	}
 }
 
+// Find and return the entry for a key.
 func (e *environMent) lookUp(key string) (sexpr, bool) {
 
 	for i := len(*e) - 1; i >= 0; i-- {
@@ -173,6 +180,7 @@ func (e *environMent) lookUp(key string) (sexpr, bool) {
 	return nilSexpr, false
 }
 
+// Store the entry for a key.
 func (e *environMent) store(key string, val sexpr) {
 	entry := (*e)[len(*e)-1][key]
 	entry.Pname = key
@@ -182,6 +190,7 @@ func (e *environMent) store(key string, val sexpr) {
 
 }
 
+// Save user defined functions to a file.
 func (e *environMent) save(out io.Writer) error {
 
 	var saved bool
@@ -209,6 +218,7 @@ func (e *environMent) save(out io.Writer) error {
 	return nil
 }
 
+// Load user defined function definitions from a file.
 func (e *environMent) load(in io.Reader) error {
 
 	var buf bytes.Buffer

@@ -1,6 +1,5 @@
 package LISP15
 
-// Item type values.
 const (
 	Prompt   = "LISP>>"
 	saveFile = "lispfns"
@@ -8,6 +7,7 @@ const (
 	trueVal  = "t"
 	eof      = -1
 
+	// Lexer item type values.
 	itemError int = iota // error occurred; value is text of error
 	itemEOF
 	itemAtom
@@ -49,6 +49,7 @@ const (
 	listSexpr
 )
 
+// Map keys of builtin functions.
 var key = map[string]int{
 	"car":        itemCAR,
 	"cond":       itemCOND,
@@ -77,6 +78,7 @@ var key = map[string]int{
 	"zerop":      itemZEROP,
 }
 
+// Some useful S-expression values.
 var (
 	zeroSexpr     sexpr
 	zeroSexprList []sexpr
