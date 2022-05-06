@@ -117,6 +117,24 @@ type property struct {
 	Apval string
 }
 
+func (prop property) duplicate() (property, error) {
+
+	var buf bytes.Buffer
+	encoder := gob.NewEncoder(&buf)
+	decoder := gob.NewDecoder(&buf)
+
+	err := encoder.Encode(prop)
+	if err != nil {
+		return prop, err
+	}
+	var retProp property
+	err = decoder.Decode(&retProp)
+	if err != nil {
+		return prop, err
+	}
+	return retProp, nil
+}
+
 // propertyList holds proprties of built-in functions,
 // indexed by function name.
 type propertyList map[string]property
@@ -210,7 +228,16 @@ func (e *environMent) load(in io.Reader) error {
 		if err != nil {
 			return err
 		}
-		environ.store(entry.Expr.AtomName, entry.Expr)
+
+		// Duplicate the entry to get rid of any slice
+		// pointer entanglements.
+		// (my faith in slices is dwindling.)
+		dupentry, err := entry.duplicate()
+		if err != nil {
+			return err
+		}
+
+		environ.store(dupentry.Expr.AtomName, dupentry.Expr)
 	}
 	return nil
 }
