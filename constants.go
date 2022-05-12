@@ -44,6 +44,7 @@ const (
 	itemADD1
 	itemSUB1
 	itemZEROP
+	itemMAPCAR
 
 	atomSexpr
 	listSexpr
@@ -76,6 +77,7 @@ var key = map[string]int{
 	"add1":       itemADD1,
 	"sub1":       itemSUB1,
 	"zerop":      itemZEROP,
+	"mapcar":     itemMAPCAR,
 }
 
 // Some useful S-expression values.

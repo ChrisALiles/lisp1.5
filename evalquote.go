@@ -23,6 +23,11 @@ func evalQuote(sxpr sexpr) (sexpr, error) {
 		return nilSexpr, nil
 	}
 
+	// We don't want the body of a lambda evaluated yet.
+	if len(sxpr.List) > 1 && sxpr.List[1].AtomName == "lambda" {
+		sxpr.List[1].Quoted = true
+	}
+
 	// debugging.
 	// Add a new environment frame.
 	if sxpr.List[0].AtomName == "pushf" {
@@ -75,6 +80,12 @@ func evalQuote(sxpr sexpr) (sexpr, error) {
 			return sxpr, err
 		}
 		sxpr.List[indx+1] = result
+	}
+
+	// Temporary work around for problem putting
+	// mapcar in the property list (issue #52860).
+	if sxpr.List[0].AtomName == "mapcar" {
+		return applyMapcar(sxpr)
 	}
 
 	// The property list has the names of the apply
@@ -377,6 +388,48 @@ func applyZerop(sxpr sexpr) (sexpr, error) {
 		return nilSexpr, nil
 	}
 	return trueSexpr, nil
+}
+
+func applyMapcar(sxpr sexpr) (sexpr, error) {
+
+	// The first argument should be either a function
+	// name or (lambda.
+	if sxpr.List[1].SexprTyp == listSexpr {
+		applyMapcarLambda(sxpr)
+	}
+
+	var (
+		fnCall sexpr // expression to call the function.
+		result sexpr // mapcar list result.
+	)
+	fnCall.SexprTyp = listSexpr
+	fnCall.List = make([]sexpr, 1, 10)
+	fnCall.List[0].AtomName = sxpr.List[1].AtomName
+
+	result.SexprTyp = listSexpr
+	result.List = make([]sexpr, 0, 10)
+
+elmtLoop:
+	for elmtI, _ := range sxpr.List[2].List {
+		for _, list := range sxpr.List[2:] {
+			if elmtI >= len(list.List) {
+				break elmtLoop
+			}
+			fnCall.List = append(fnCall.List, list.List[elmtI])
+		}
+		resElmt, err := evalQuote(fnCall)
+		if err != nil {
+			return fnCall, fmt.Errorf("error calling mapcar function - %v", err)
+		}
+		fnCall.List = fnCall.List[:1]
+		result.List = append(result.List, resElmt)
+	}
+	return result, nil
+}
+
+func applyMapcarLambda(sxpr sexpr) (sexpr, error) {
+
+	return sxpr, nil
 }
 
 func evalCond(sxpr sexpr) (sexpr, error) {
