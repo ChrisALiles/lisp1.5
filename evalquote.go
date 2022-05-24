@@ -23,11 +23,6 @@ func evalQuote(sxpr sexpr) (sexpr, error) {
 		return nilSexpr, nil
 	}
 
-	// We don't want the body of a lambda evaluated yet.
-	if len(sxpr.List) > 1 && sxpr.List[1].AtomName == "lambda" {
-		sxpr.List[1].Quoted = true
-	}
-
 	// debugging.
 	// Add a new environment frame.
 	if sxpr.List[0].AtomName == "pushf" {
@@ -69,6 +64,11 @@ func evalQuote(sxpr sexpr) (sexpr, error) {
 		sxpr.List[1].Quoted = true
 	}
 
+	// Dont't evaluate args for mapcar lambda.
+	if sxpr.List[0].AtomName == "mapcar" && sxpr.List[1].SexprTyp == listSexpr {
+		return applyMapcarLambda(sxpr)
+	}
+
 	// Evaluate parameters.
 	for indx, thisSxpr := range sxpr.List[1:] {
 
@@ -84,6 +84,8 @@ func evalQuote(sxpr sexpr) (sexpr, error) {
 
 	// Temporary work around for problem putting
 	// mapcar in the property list (issue #52860).
+	// 12 May 2022 - this code will have to stay - the
+	// Go compiler is working as intended.
 	if sxpr.List[0].AtomName == "mapcar" {
 		return applyMapcar(sxpr)
 	}
@@ -105,9 +107,11 @@ func evalQuote(sxpr sexpr) (sexpr, error) {
 	}
 	// If the returned expression is used, the original
 	// function gets overwritten by run time parameter
-	// values because slice pointers still lead back to
-	// the function definition in the associatopnList
-	// map.
+	// values because (presumably) slice pointers still
+	// lead back to the function definition in the
+	// associatopnList map.
+	// 23 May 2022 - now ot looks to me that the code
+	// is working as one would expect.
 	// The duplicate function removes all the
 	// myriad slice entanglements and the resulting
 	// expression can then be safely worked on.
@@ -429,7 +433,63 @@ elmtLoop:
 
 func applyMapcarLambda(sxpr sexpr) (sexpr, error) {
 
-	return sxpr, nil
+	if sxpr.List[1].List[0].AtomName != "lambda" {
+		return sxpr, fmt.Errorf("LAMBDA expected but not found")
+	}
+	if len(sxpr.List[1].List[1].List) != len(sxpr.List)-2 {
+		return sxpr, fmt.Errorf("mismatch lambda params and mapcar lists")
+	}
+
+	// Evaluate the lists (not the lambda part).
+	for index, thisSxpr := range sxpr.List[2:] {
+		evSxpr, err := evalQuote(thisSxpr)
+		if err != nil {
+			return thisSxpr, err
+		}
+		sxpr.List[index+2] = evSxpr
+	}
+
+	// Create a new environment frame in which to resolve
+	// parameter values.
+	environ.pushFrame()
+
+	defer func() {
+		environ.popFrame()
+	}()
+
+	var result sexpr
+	result.SexprTyp = listSexpr
+	result.List = make([]sexpr, 0, 10)
+
+elmtLoop:
+	for elmtI, _ := range sxpr.List[2].List {
+		for index, list := range sxpr.List[2:] {
+			if elmtI >= len(list.List) {
+				break elmtLoop
+			}
+			environ.store(sxpr.List[1].List[1].List[index].AtomName, sxpr.List[index+2].List[elmtI])
+		}
+		var (
+			resElmt sexpr
+			exSxpr  sexpr
+			err     error
+		)
+		for _, thisSxpr := range sxpr.List[1].List[2:] {
+			// We must execute copies of the s-expressions,
+			// otherwise the formal parameters are over-written
+			// on the first pass and never changed after that.
+			exSxpr, err = thisSxpr.duplicate()
+			if err != nil {
+				return thisSxpr, err
+			}
+			resElmt, err = evalQuote(exSxpr)
+			if err != nil {
+				return thisSxpr, fmt.Errorf("error calling mapcar function - %v", err)
+			}
+		}
+		result.List = append(result.List, resElmt)
+	}
+	return result, nil
 }
 
 func evalCond(sxpr sexpr) (sexpr, error) {

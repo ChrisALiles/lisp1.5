@@ -160,9 +160,9 @@ func (e *environMent) pushFrame() {
 func (e *environMent) popFrame() {
 
 	// note the pointer must be dereference before it
-	// can be used as a slice - (*e).
+	// can be used as a slice - viz (*e).
 	//
-	// Don't pop the global environment.
+	// Don't pop the global environment [0].
 	if len(*e) > 1 {
 		*e = (*e)[:len(*e)-1]
 	}
@@ -193,7 +193,6 @@ func (e *environMent) store(key string, val sexpr) {
 // Save user defined functions to a file.
 func (e *environMent) save(out io.Writer) error {
 
-	var saved bool
 	var buf bytes.Buffer
 	encoder := gob.NewEncoder(&buf)
 
@@ -206,14 +205,10 @@ func (e *environMent) save(out io.Writer) error {
 		if err != nil {
 			return err
 		}
-		saved = true
-	}
-	if !saved {
-		return nil
-	}
-	_, err := buf.WriteTo(out)
-	if err != nil {
-		return err
+		_, err = buf.WriteTo(out)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -240,14 +235,16 @@ func (e *environMent) load(in io.Reader) error {
 		}
 
 		// Duplicate the entry to get rid of any slice
-		// pointer entanglements.
+		// pointer entanglements (presuably).
 		// (my faith in slices is dwindling.)
-		dupentry, err := entry.duplicate()
+		// 23 May 2022 - it's much more likely to be
+		// caused by something in gob than in slices.
+		dupEntry, err := entry.duplicate()
 		if err != nil {
 			return err
 		}
 
-		environ.store(dupentry.Expr.AtomName, dupentry.Expr)
+		environ.store(dupEntry.Expr.AtomName, dupEntry.Expr)
 	}
 	return nil
 }
