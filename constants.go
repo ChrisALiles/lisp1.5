@@ -1,11 +1,12 @@
 package LISP15
 
 const (
-	Prompt   = "LISP>>"
-	saveFile = "lispfns"
-	nilVal   = "nil"
-	trueVal  = "t"
-	eof      = -1
+	Prompt        = "LISP>>"
+	saveFile      = "lispfns"
+	nilVal        = "nil"
+	nilDisplayVal = "NIL"
+	trueVal       = "t"
+	eof           = -1
 
 	// Lexer item type values.
 	itemError int = iota // error occurred; value is text of error

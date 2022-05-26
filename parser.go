@@ -3,26 +3,27 @@ package LISP15
 import (
 	"errors"
 	"fmt"
+	"io"
 )
 
 var errEndList = errors.New("mismatched right paren")
 
-func Parser(items chan Item) {
+func Parser(items chan Item, display io.Writer) {
 	for {
 		sxpr, err := getSexpr(items)
 		if err != nil {
-			fmt.Println("ERROR ** ", err)
-			fmt.Print(Prompt)
+			fmt.Fprintln(display, "ERROR ** ", err)
+			fmt.Fprint(display, Prompt)
 			continue
 		}
 		finalSxpr, err := evalQuote(sxpr)
 		if err != nil {
-			fmt.Println("ERROR ** ", err)
-			fmt.Print(Prompt)
+			fmt.Fprintln(display, "ERROR ** ", err)
+			fmt.Fprint(display, Prompt)
 			continue
 		}
-		fmt.Println(finalSxpr)
-		fmt.Print(Prompt)
+		fmt.Fprintln(display, finalSxpr)
+		fmt.Fprint(display, Prompt)
 	}
 
 }

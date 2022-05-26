@@ -207,6 +207,10 @@ func applyCdr(sxpr sexpr) (sexpr, error) {
 		return sxpr, err
 	}
 
+	if len(sxpr.List[1].List) == 0 {
+		return nilSexpr, nil
+	}
+
 	var retSexpr = sexpr{
 		listSexpr, false, "", "", sxpr.List[1].List[1:],
 	}
@@ -256,7 +260,7 @@ func applyQuote(sxpr sexpr) (sexpr, error) {
 // We use defun instead of define, at least initially.
 func applyDefine(sxpr sexpr) (sexpr, error) {
 
-	return sxpr, nil
+	return sxpr, fmt.Errorf("define is not implemented")
 }
 
 func applyDefun(sxpr sexpr) (sexpr, error) {

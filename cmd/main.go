@@ -24,7 +24,7 @@ func main() {
 	items := make(chan LISP15.Item)
 
 	// Start the parser in a separate goroutine.
-	go LISP15.Parser(items)
+	go LISP15.Parser(items, os.Stdout)
 
 	fmt.Print(LISP15.Prompt)
 

@@ -70,7 +70,7 @@ func (sxpr sexpr) String() string {
 		return sxpr.Val
 	}
 	if len(sxpr.List) == 0 {
-		return nilVal
+		return nilDisplayVal
 	}
 
 	str := "("
