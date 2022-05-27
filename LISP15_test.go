@@ -1,33 +1,23 @@
-package main_test
+package LISP15
 
 import (
 	"bytes"
-	"os"
 	"testing"
 	"time"
-
-	"github.com/ChrisALiles/LISP15"
 )
 
-var display bytes.Buffer
-
-// Channel between lexer and parser.
-var items = make(chan LISP15.Item)
-
-func TestMain(m *testing.M) {
-
-	// Start the parser in a separate goroutine.
-	go LISP15.Parser(items, &display)
-	// Run the tests.
-	result := m.Run()
-	os.Exit(result)
-}
 func TestLISP(t *testing.T) {
 
-	// Each test searches the buffer (log file) for the expected string.
+	var display bytes.Buffer
+
+	// Channel between lexer and parser.
+	var items = make(chan Item)
+	// Start the parser in a separate goroutine.
+	go Parser(items, &display)
+
 	for _, te := range tests {
 		t.Run(te.name, func(t *testing.T) {
-			LISP15.Lexer(te.lisp, items)
+			Lexer(te.lisp, items)
 			// Allow time for the LISP response.
 			// Is there a better way to do this?
 			time.Sleep(time.Duration(2 * int(time.Millisecond)))
