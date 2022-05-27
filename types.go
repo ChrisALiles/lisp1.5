@@ -171,6 +171,7 @@ func (e *environMent) popFrame() {
 // Find and return the entry for a key.
 func (e *environMent) lookUp(key string) (sexpr, bool) {
 
+	// Start at the most recent frame.
 	for i := len(*e) - 1; i >= 0; i-- {
 		entry, found := (*e)[i][key]
 		if found {

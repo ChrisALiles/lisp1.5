@@ -37,6 +37,12 @@ func evalQuote(sxpr sexpr) (sexpr, error) {
 		return nilSexpr, nil
 	}
 
+	// Check the number of args supplied.
+	num, found := minArgs[sxpr.List[0].AtomName]
+	if found && num > (len(sxpr.List)-1) {
+		return sxpr, fmt.Errorf("too few arguments")
+	}
+
 	// The next few fuctions are those that don't
 	// need to have their parameters evaluated
 	// (immediately).
@@ -58,6 +64,7 @@ func evalQuote(sxpr sexpr) (sexpr, error) {
 
 	if sxpr.List[0].AtomName == "load" {
 		return nilSexpr, Load()
+
 	}
 
 	if sxpr.List[0].AtomName == "setq" || sxpr.List[0].AtomName == "quote" {
@@ -418,7 +425,7 @@ func applyMapcar(sxpr sexpr) (sexpr, error) {
 	result.List = make([]sexpr, 0, 10)
 
 elmtLoop:
-	for elmtI, _ := range sxpr.List[2].List {
+	for elmtI := range sxpr.List[2].List {
 		for _, list := range sxpr.List[2:] {
 			if elmtI >= len(list.List) {
 				break elmtLoop
@@ -466,7 +473,7 @@ func applyMapcarLambda(sxpr sexpr) (sexpr, error) {
 	result.List = make([]sexpr, 0, 10)
 
 elmtLoop:
-	for elmtI, _ := range sxpr.List[2].List {
+	for elmtI := range sxpr.List[2].List {
 		for index, list := range sxpr.List[2:] {
 			if elmtI >= len(list.List) {
 				break elmtLoop
