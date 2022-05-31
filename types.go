@@ -118,24 +118,6 @@ type property struct {
 	Apval string
 }
 
-func (prop property) duplicate() (property, error) {
-
-	var buf bytes.Buffer
-	encoder := gob.NewEncoder(&buf)
-	decoder := gob.NewDecoder(&buf)
-
-	err := encoder.Encode(prop)
-	if err != nil {
-		return prop, err
-	}
-	var retProp property
-	err = decoder.Decode(&retProp)
-	if err != nil {
-		return prop, err
-	}
-	return retProp, nil
-}
-
 // propertyList holds proprties of built-in functions,
 // indexed by function name.
 type propertyList map[string]property
@@ -225,8 +207,8 @@ func (e *environMent) load(in io.Reader) error {
 	}
 	decoder := gob.NewDecoder(&buf)
 
-	var entry property
 	for {
+		var entry property
 		err = decoder.Decode(&entry)
 		if err == io.EOF {
 			break
@@ -240,12 +222,12 @@ func (e *environMent) load(in io.Reader) error {
 		// (my faith in slices is dwindling.)
 		// 23 May 2022 - it's much more likely to be
 		// caused by something in gob than in slices.
-		dupEntry, err := entry.duplicate()
-		if err != nil {
-			return err
-		}
+		// 31 May 2022 - problem fixed by moving "var
+		// entry property" inside the for loop. It's
+		// probably still a bug but I'm not going to
+		// pursue it.
 
-		environ.store(dupEntry.Expr.AtomName, dupEntry.Expr)
+		environ.store(entry.Expr.AtomName, entry.Expr)
 	}
 	return nil
 }
